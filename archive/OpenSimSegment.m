@@ -1,0 +1,97 @@
+function  [left,right] = OpenSimSegment(subject)
+
+%% Initialization
+
+% Import OpenSim pkg
+import org.opensim.modeling.*
+
+% File path
+filepath = 'C:\Users\nazon\OneDrive\Documents\Walter Reed\Preference Project\Exploratory Aim Data\Exploratory Aim';
+
+% Mode
+trials = 5;
+
+%% Segmentation
+for k = 1:trials
+    
+    if subject == 'AFOWR01'
+        IK1 = Osim.readMOT([filepath '\' subject '\IK\' subject '_EA_000' num2str(k) '_IK.mot']);
+        ID1 = Osim.readSTO([filepath '\' subject '\ID\' subject '_EA_000' num2str(k) '_ID.sto']);
+        GRF1 = Osim.readMOT([filepath '\' subject '\ExtLoads\' subject '_EA_000' num2str(k) '_GRF.mot']);
+        load([filepath '\' subject '\Power\' subject '_EA_000' num2str(k) '_FootPower.mat']);
+        JP1 = FootPowerTable;
+    else
+        IK1 = Osim.readMOT([filepath '\' subject '\IK\' subject '_EA_' num2str(k) '_IK.mot']);
+        ID1 = Osim.readSTO([filepath '\' subject '\ID\' subject '_EA_' num2str(k) '_ID.sto']);
+        GRF1 = Osim.readMOT([filepath '\' subject '\ExtLoads\' subject '_EA_' num2str(k) '_GRF.mot']);
+        load([filepath '\' subject '\Power\' subject '_EA_' num2str(k) '_FootPower.mat']);
+        JP1 = FootPowerTable;
+    end
+    
+    IK1_headers = IK1.Properties.VariableNames;
+    ID1_headers = ID1.Properties.VariableNames;
+    
+    tstart = IK1.Header(1);
+    tstart_idx = find(round(IK1.Header,3) == round(tstart,3));
+    GRF1 = GRF1(find(round(GRF1.Header,3) == round(tstart,3),1):end,:);
+    GRF_time_vector = GRF1{:,1};
+    IK1 = interp1(IK1{tstart_idx:end,1}, IK1{tstart_idx:end,:}, GRF_time_vector, 'linear');
+    ID1 = interp1(ID1{tstart_idx:end,1}, ID1{tstart_idx:end,:}, GRF_time_vector, 'linear');
+    JP1 = interp1(JP1{tstart_idx:end,1}, JP1{tstart_idx:end,:}, GRF_time_vector, 'linear');
+    
+    HC_upper_threshold = 75;
+    HC_lower_threshold = 20;
+    minDist = 1000; 
+    HC_L = find(GRF1.FPLeft_vy(2:end) > HC_lower_threshold & GRF1.FPLeft_vy(2:end) < HC_upper_threshold & diff(GRF1.FPLeft_vy) > 0 ) + 1;
+    HC_L = HC_L([true; diff(HC_L) > minDist]);
+    TO_L = find(GRF1.FPLeft_vy(2:end) > HC_lower_threshold & GRF1.FPLeft_vy(2:end) < HC_upper_threshold & diff(GRF1.FPLeft_vy) < 0 ) + 1;
+    TO_L = TO_L([true; diff(TO_L) > minDist]);
+    HC_R = find(GRF1.FPRight_vy(2:end) > HC_lower_threshold & GRF1.FPRight_vy(2:end) < HC_upper_threshold & diff(GRF1.FPRight_vy) > 0 ) + 1;
+    HC_R = HC_R([true; diff(HC_R) > minDist]);
+    TO_R = find(GRF1.FPRight_vy(2:end) > HC_lower_threshold & GRF1.FPRight_vy(2:end) < HC_upper_threshold & diff(GRF1.FPRight_vy) < 0 ) + 1;
+    TO_R = TO_R([true; diff(TO_R) > minDist]);
+    
+    if HC_L(1) > TO_L(1)
+        HC_L = HC_L(1:end-1);
+        TO_L = TO_L(2:end);
+    end
+    
+    if HC_R(1) > TO_R(1)
+        HC_R = HC_R(1:end-1);
+        TO_R = TO_R(2:end);
+    end
+    
+    for i = 1:length(HC_L)-1
+        time_L{i} = IK1(HC_L(i):HC_L(i+1),1);
+        Hip_IK_L{i} = IK1(HC_L(i):HC_L(i+1),16);
+        Knee_IK_L{i} = IK1(HC_L(i):HC_L(i+1),19);
+        Ankle_IK_L{i} = IK1(HC_L(i):HC_L(i+1),21);
+        Hip_ID_L{i} = ID1(HC_L(i):HC_L(i+1),11);
+        Knee_ID_L{i} = ID1(HC_L(i):HC_L(i+1),19);
+        Ankle_ID_L{i} = ID1(HC_L(i):HC_L(i+1),28);
+        GRF_L{i} = GRF1.FPLeft_vy(HC_L(i):HC_L(i+1));
+        Ankle_JP_L{i} = JP1(HC_L(i):HC_L(i+1),2);
+    end
+    
+    for i = 1:length(HC_R)-1
+        time_R{i} = IK1(HC_R(i):HC_R(i+1),1);
+        Hip_IK_R{i} = IK1(HC_R(i):HC_R(i+1),8);
+        Knee_IK_R{i} = IK1(HC_R(i):HC_R(i+1),11);
+        Ankle_IK_R{i} = IK1(HC_R(i):HC_R(i+1),13);
+        Hip_ID_R{i} = ID1(HC_R(i):HC_R(i+1),8);
+        Knee_ID_R{i} = ID1(HC_R(i):HC_R(i+1),17);
+        Ankle_ID_R{i} = ID1(HC_R(i):HC_R(i+1),27);
+        GRF_R{i} = GRF1.FPRight_vy(HC_R(i):HC_R(i+1));
+        Ankle_JP_R{i} = JP1(HC_R(i):HC_R(i+1),3);
+    end
+    
+    left = struct('Time', time_L, ...
+                  'Hip_IK', Hip_IK_L, 'Knee_IK', Knee_IK_L, 'Ankle_IK', Ankle_IK_L, ...
+                  'Hip_ID', Hip_ID_L, 'Knee_ID', Knee_ID_L, 'Ankle_ID', Ankle_ID_L, ...
+                  'GRF', GRF_L, 'Ankle_JP', Ankle_JP_L);
+    right = struct('Time', time_R, ...
+                   'Hip_IK', Hip_IK_R, 'Knee_IK', Knee_IK_R, 'Ankle_IK', Ankle_IK_R, ...
+                   'Hip_ID', Hip_ID_R, 'Knee_ID', Knee_ID_R, 'Ankle_ID', Ankle_ID_R, ...
+                   'GRF', GRF_R, 'Ankle_JP', Ankle_JP_R);
+end
+end
