@@ -1,0 +1,40 @@
+{
+  "HT_stiffness": {
+    "labeled_rows": 1881,
+    "training_rows": 1505,
+    "split_rows": {
+      "train": 1505,
+      "validation": 188,
+      "test": 188
+    },
+    "validation": {
+      "mae": 14.836467742919922,
+      "rmse": 23.45750238121142,
+      "rows": 188
+    },
+    "test": {
+      "mae": 13.884733646473986,
+      "rmse": 20.477976081544675,
+      "rows": 188
+    }
+  },
+  "HT_neutral_angle": {
+    "labeled_rows": 1881,
+    "training_rows": 1505,
+    "split_rows": {
+      "train": 1505,
+      "validation": 188,
+      "test": 188
+    },
+    "validation": {
+      "mae": 13.106843501963514,
+      "rmse": 23.090006442532513,
+      "rows": 188
+    },
+    "test": {
+      "mae": 10.573376330923526,
+      "rmse": 17.12787604281959,
+      "rows": 188
+    }
+  }
+}

@@ -26,11 +26,11 @@ from preference_model_utils import (
 # Edit this path to choose the MAT-file to use when no path is passed.
 DATA_FILE = (
     r"C:\Users\nazon\OneDrive\Documents\Walter Reed\Preference Project"
-    r"\Exploratory Aim Data\Exploratory Aim\datasets\percent\footshank_dataset.mat"
+    r"\Exploratory Aim Data\Exploratory Aim\datasets\delta\delta_footshank_dataset.mat"
 )
 # Choose "leave_one_out" (by subject) or "data_split" (by stride).
-VALIDATION_TYPE = "leave_one_out"
-DATA_SPLIT = (80, 10, 10)  # Train, validation, test percentages.
+VALIDATION_TYPE = "data_split"
+DATA_SPLIT = (80, 10, 10)  # Train, validation, test percentages if using data_split option
 
 
 def new_model(args):
