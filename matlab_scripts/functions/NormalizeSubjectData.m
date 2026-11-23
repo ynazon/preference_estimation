@@ -86,6 +86,10 @@ function scaled_signal = normalize_input(X,gui,normalization_method,signal_name,
             mass = gui.subj_mass(...
                 (trial_number_vector(i) == gui.Trial_Number) &...
                 (subject_vector(i) == gui.Subject));
+            height = gui.subj_height(...
+                (trial_number_vector(i) == gui.Trial_Number) &...
+                (subject_vector(i) == gui.Subject));
+            gravity = 9.81; % m/s^2
 
             % scaled_final_k = (final_k - min_k) / (max_k - min_k);
             % scaled_current_k = (X(i) - min_k)/(max_k - min_k);
@@ -93,12 +97,17 @@ function scaled_signal = normalize_input(X,gui,normalization_method,signal_name,
             scaled_final_k = ((final_k/mass) - min_k) / (max_k - min_k);
             scaled_current_k = ((X(i)/mass) - min_k)/(max_k - min_k);
 
+            non_dim_final_k = final_k * (180/(mass*gravity*height*pi));
+            non_dim_current_k = X(i) * (180/(mass*gravity*height*pi));
+
             if strcmp(output_format,'delta') 
-                scaled_signal(i) = (X(i) - final_k)/mass; % in delta k
+                % scaled_signal(i) = (X(i) - final_k)/mass; % in delta k
                 % scaled_signal(i) = (scaled_current_k - scaled_final_k)/mass; % in delta k
+                scaled_signal(i) = non_dim_current_k - non_dim_final_k; % in delta k
             elseif strcmp(output_format,'percent') 
-                scaled_signal(i) = ((X(i)/mass)/(final_k/mass))*100; % in percent k
+                % scaled_signal(i) = ((X(i)/mass)/(final_k/mass))*100; % in percent k
                 % scaled_signal(i) = (scaled_current_k/scaled_final_k)*100; % in percent k
+                scaled_signal(i) = (non_dim_current_k/non_dim_final_k)*100; % in percent k
             end
         end
         scaled_signal = scaled_signal';
@@ -116,12 +125,18 @@ function scaled_signal = normalize_input(X,gui,normalization_method,signal_name,
             %     (subject_vector(i) == gui.Subject));
             scaled_final_na = (final_na - min_na) / (max_na - min_na);
             scaled_current_na = (X(i) - min_na)/(max_na - min_na);
+
+            non_dim_final_na = final_na*(pi/180);
+            non_dim_current_na = X(i)*(pi/180);
+
             if strcmp(output_format,'delta') 
-                scaled_signal(i) = X(i) - final_na; % in delta na
+                % scaled_signal(i) = X(i) - final_na; % in delta na
                 % scaled_signal(i) = scaled_current_na - scaled_final_na; % in delta na
+                scaled_signal(i) = non_dim_current_na - non_dim_final_na;
             elseif strcmp(output_format,'percent') 
-                scaled_signal(i) = (X(i)/final_na)*100; % in percent na
+                % scaled_signal(i) = (X(i)/final_na)*100; % in percent na
                 % scaled_signal(i) = (scaled_current_na/scaled_final_na)*100; % in percent na
+                scaled_signal(i) = (non_dim_current_na/non_dim_final_na)*100;
             end
         end
         scaled_signal = scaled_signal';
