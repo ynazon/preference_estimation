@@ -76,6 +76,7 @@ function scaled_signal = normalize_input(X,gui,normalization_method,signal_name,
         end
 
     elseif strcmp(normalization_method,'stiffness')
+        % Units: (N*m)/deg
         max_k = 10;
         min_k = 0;
         for i=1:length(trial_number_vector)
@@ -85,34 +86,42 @@ function scaled_signal = normalize_input(X,gui,normalization_method,signal_name,
             mass = gui.subj_mass(...
                 (trial_number_vector(i) == gui.Trial_Number) &...
                 (subject_vector(i) == gui.Subject));
-            scaled_final_k = (final_k - min_k) / (max_k - min_k);
-            scaled_current_k = (X(i) - min_k)/(max_k - min_k);
+
+            % scaled_final_k = (final_k - min_k) / (max_k - min_k);
+            % scaled_current_k = (X(i) - min_k)/(max_k - min_k);
+
+            scaled_final_k = ((final_k/mass) - min_k) / (max_k - min_k);
+            scaled_current_k = ((X(i)/mass) - min_k)/(max_k - min_k);
+
             if strcmp(output_format,'delta') 
                 scaled_signal(i) = (X(i) - final_k)/mass; % in delta k
-                % scaled_signal(i) = scaled_current_k - scaled_final_k; % in delta k
+                % scaled_signal(i) = (scaled_current_k - scaled_final_k)/mass; % in delta k
             elseif strcmp(output_format,'percent') 
-                scaled_signal(i) = (scaled_current_k/scaled_final_k)*100; % in percent k
+                scaled_signal(i) = ((X(i)/mass)/(final_k/mass))*100; % in percent k
+                % scaled_signal(i) = (scaled_current_k/scaled_final_k)*100; % in percent k
             end
         end
         scaled_signal = scaled_signal';
 
     elseif strcmp(normalization_method,'na')
+        % Units: deg
         max_na = 20;
         min_na = -5;
         for i=1:length(trial_number_vector)
             final_na = gui.final_NA(...
                 (trial_number_vector(i) == gui.Trial_Number) &...
                 (subject_vector(i) == gui.Subject));
-            mass = gui.subj_mass(...
-                (trial_number_vector(i) == gui.Trial_Number) &...
-                (subject_vector(i) == gui.Subject));
+            % mass = gui.subj_mass(...
+            %     (trial_number_vector(i) == gui.Trial_Number) &...
+            %     (subject_vector(i) == gui.Subject));
             scaled_final_na = (final_na - min_na) / (max_na - min_na);
             scaled_current_na = (X(i) - min_na)/(max_na - min_na);
             if strcmp(output_format,'delta') 
-                scaled_signal(i) = (X(i) - final_na)/mass; % in delta k
-                % scaled_signal(i) = scaled_current_na - scaled_final_na; % in delta k
+                scaled_signal(i) = X(i) - final_na; % in delta na
+                % scaled_signal(i) = scaled_current_na - scaled_final_na; % in delta na
             elseif strcmp(output_format,'percent') 
-                scaled_signal(i) = (scaled_current_na/scaled_final_na)*100; % in percent k
+                scaled_signal(i) = (X(i)/final_na)*100; % in percent na
+                % scaled_signal(i) = (scaled_current_na/scaled_final_na)*100; % in percent na
             end
         end
         scaled_signal = scaled_signal';
